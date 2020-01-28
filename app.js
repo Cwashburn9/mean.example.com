@@ -11,8 +11,9 @@ var app = express();
 
 // configuring the config.dev.js
 var config = require('./config.dev');
-//Test the file 
-// console.log(config);
+
+// creating connection to the database
+var mongoose = require('mongoose');
 
 
 
@@ -44,5 +45,8 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+//Connect to MongoDB
+mongoose.connect(config.mongodb, { useNewUrlParser: true });
 
 module.exports = app;
