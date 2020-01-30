@@ -3,10 +3,14 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+// creating connection to the database
+var mongoose = require('mongoose');
+var session = require('express-session');
+var MongoStore = require('connect-mongo')(session);
+var passport = require('passport');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-
 var apiUsersRouter = require('./routes/api/users');
 
 var app = express();
@@ -14,10 +18,8 @@ var app = express();
 // configuring the config.dev.js
 var config = require('./config.dev');
 
-// creating connection to the database
-var mongoose = require('mongoose');
-
-
+//Connect to MongoDB
+mongoose.connect(config.mongodb, { useNewUrlParser: true });
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -49,7 +51,6 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-//Connect to MongoDB
-mongoose.connect(config.mongodb, { useNewUrlParser: true });
+
 
 module.exports = app;
