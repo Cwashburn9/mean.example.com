@@ -3,7 +3,6 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-// creating connection to the database
 var mongoose = require('mongoose');
 var session = require('express-session');
 var MongoStore = require('connect-mongo')(session);
@@ -15,12 +14,12 @@ var Users = require('./models/users');
 var authRouter = require('./routes/auth');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-var apiUsersRouter = require('./routes/api/users');
 var apiAuthRouter = require('./routes/api/auth');
+var apiUsersRouter = require('./routes/api/users');
 
 var app = express();
 
-// configuring the config.dev.js
+//Call the config file
 var config = require('./config.dev');
 
 //Connect to MongoDB
@@ -55,7 +54,6 @@ app.use(require('express-session')({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
-
 passport.use(Users.createStrategy());
 
 passport.serializeUser(function(user, done){
@@ -77,7 +75,7 @@ app.use(function(req,res,next){
   next();
 });
 
-//Session-based access control
+//Session based access control
 app.use(function(req,res,next){
   //Uncomment the following line to allow access to everything.
   //return next();
@@ -99,7 +97,7 @@ app.use(function(req,res,next){
     return next();
   }
 
-  //Allow access to dynamic endpoints
+  //Allow access to dynamic end points
   var subs = [
     '/public/',
     '/api/auth/'
@@ -120,7 +118,7 @@ app.use(function(req,res,next){
   }
 
   //There is no session nor are there any whitelist matches. Deny access and
-  //Redirect the user to the login screen.
+  //redirect the user to the login screen.
   return res.redirect('/auth#login');
 });
 
@@ -145,7 +143,5 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
-
-
 
 module.exports = app;
