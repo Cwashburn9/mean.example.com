@@ -1,6 +1,6 @@
-var usersApp = (function() {
+var usersApp = (function () {
 
-  function viewUsers(){
+  function viewUsers() {
 
     let uri = `${window.location.origin}/api/users`;
     let xhr = new XMLHttpRequest();
@@ -13,7 +13,7 @@ var usersApp = (function() {
 
     xhr.send();
 
-    xhr.onload = function(){
+    xhr.onload = function () {
       let app = document.getElementById('app');
       let data = JSON.parse(xhr.response);
       let users = data.users;
@@ -22,7 +22,7 @@ var usersApp = (function() {
 
       //Loop each user record into it's own HTML table row, each user should
       //have a link a user view
-      for (let i=0; i<users.length; i++) {
+      for (let i = 0; i < users.length; i++) {
         rows = rows + `<tr>
           <td>
             <a href="#view-${users[i]['_id']}">${users[i]['last_name']}, ${users[i]['first_name']}</a>
@@ -60,10 +60,10 @@ var usersApp = (function() {
     }
   }
 
-  function createUser(){
+  function createUser() {
     var app = document.getElementById('app');
 
-    var form =  `
+    var form = `
         <div class="card">
           <div class="card-header clearfix">
             <h2 class="h3 float-left">Create a New User</h2>
@@ -107,10 +107,10 @@ var usersApp = (function() {
         </div>
     `;
 
-    app.innerHTML=form;
+    app.innerHTML = form;
   }
 
-  function viewUser(id){
+  function viewUser(id) {
 
     let uri = `${window.location.origin}/api/users/${id}`;
     let xhr = new XMLHttpRequest();
@@ -123,7 +123,7 @@ var usersApp = (function() {
 
     xhr.send();
 
-    xhr.onload = function(){
+    xhr.onload = function () {
       let app = document.getElementById('app');
       let data = JSON.parse(xhr.response);
       let card = '';
@@ -145,7 +145,7 @@ var usersApp = (function() {
     }
   }
 
-  function editUser(id){
+  function editUser(id) {
 
     let uri = `${window.location.origin}/api/users/${id}`;
     let xhr = new XMLHttpRequest();
@@ -158,11 +158,11 @@ var usersApp = (function() {
 
     xhr.send();
 
-    xhr.onload = function(){
+    xhr.onload = function () {
       let app = document.getElementById('app');
       let data = JSON.parse(xhr.response);
 
-      var form =  `
+      var form = `
         <div class="card">
           <div class="card-header clearfix">
             <h2 class="h3 float-left">Edit</h2>
@@ -205,21 +205,25 @@ var usersApp = (function() {
             </form>
           </div>
         </div>
+        <div>
+  <a href="#delete-${data.user._id}" class="text-danger">Delete</a>
+</div>
       `;
 
-      app.innerHTML=form;
+      app.innerHTML = form;
+      processRequest('editUser', '/api/users', 'PUT');
     }
   }
 
-  function postRequest(formId, url){
+  function processRequest(formId, url, method) {
     let form = document.getElementById(formId);
-    form.addEventListener('submit', function(e){
+    form.addEventListener('submit', function (e) {
       e.preventDefault();
 
       let formData = new FormData(form);
       let uri = `${window.location.origin}${url}`;
       let xhr = new XMLHttpRequest();
-      xhr.open('POST', uri);
+      xhr.open(method, uri);
 
       xhr.setRequestHeader(
         'Content-Type',
@@ -227,31 +231,76 @@ var usersApp = (function() {
       );
 
       let object = {};
-      formData.forEach(function(value, key){
-        object[key]=value;
+      formData.forEach(function (value, key) {
+        object[key] = value;
       });
 
       xhr.send(JSON.stringify(object));
-      xhr.onload = function(){
+      xhr.onload = function () {
         let data = JSON.parse(xhr.response);
-        if(data.success===true){
+        if (data.success === true) {
           window.location.href = '/';
-        }else{
-          document.getElementById('formMsg').style.display='block';
+        } else {
+          document.getElementById('formMsg').style.display = 'block';
         }
       }
     });
   }
 
+  function deleteView(id) {
+
+    let uri = `${window.location.origin}/api/users/${id}`;
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', uri);
+
+    xhr.setRequestHeader(
+      'Content-Type',
+      'application/json; charset=UTF-8'
+    );
+
+    xhr.send();
+
+    xhr.onload = function () {
+      let app = document.getElementById('app');
+      let data = JSON.parse(xhr.response);
+      let card = '';
+
+      card = `<div class="card bg-transparent border-danger text-danger bg-danger">
+        <div class="card-header bg-transparent border-danger">
+          <h2 class="h3 text-center">Your About to Delete a User</h2>
+        </div>
+        <div class="card-body text-center">
+          <div>
+            Are you sure you want to delete
+            <strong>${data.user.first_name} ${data.user.last_name}</strong>
+          </div>
+
+          <div>Username: <strong>${data.user.username}</strong></div>
+          <div>Email: <strong>${data.user.email}</strong></div>
+
+          <div class="text-center">
+            <br>
+            <a class="btn btn-lg btn-danger text-white">
+              Yes delete ${data.user.username}
+            </a>
+          </div>
+
+        </div>
+      </div>`;
+
+      app.innerHTML = card;
+    }
+  }
+
   return {
-    load: function(){
+    load: function () {
       let hash = window.location.hash;
       let hashArray = hash.split('-');
 
-      switch(hashArray[0]){
+      switch (hashArray[0]) {
         case '#create':
           createUser();
-          postRequest('createUser', '/api/users');
+          processRequest('createUser', '/api/users', 'POST');
           break;
 
         case '#view':
@@ -263,7 +312,7 @@ var usersApp = (function() {
           break;
 
         case '#delete':
-          console.log('DELETE');
+          deleteView(hashArray[1]);
           break;
 
         default:
@@ -277,6 +326,6 @@ var usersApp = (function() {
 
 usersApp.load();
 
-window.addEventListener("hashchange", function(){
+window.addEventListener("hashchange", function () {
   usersApp.load();
 });
