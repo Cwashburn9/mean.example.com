@@ -3,31 +3,24 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+
+var indexRouter = require('./routes/index');
+var usersRouter = require('./routes/users');
+var apiUsersRouter = require('./routes/api/users');
+var apiArticlesRouter = require('./routes/api/articles');
+var LocalStrategy = require('passport-local').Strategy;
+var Users = require('./models/users');
+var apiAuthRouter = require('./routes/api/auth');
+var authRouter = require('./routes/auth');
+var articlesRouter = require('./routes/articles');
+
+var app = express();
+
+var config = require('./config.dev');
 var mongoose = require('mongoose');
 var session = require('express-session');
 var MongoStore = require('connect-mongo')(session);
 var passport = require('passport');
-var LocalStrategy = require('passport-local').Strategy;
-
-var Users = require('./models/users');
-var Articles = require('./models/articles');
-
-var authRouter = require('./routes/auth');
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-var articlesRouter = require('./routes/articles');
-var apiAuthRouter = require('./routes/api/auth');
-var apiUsersRouter = require('./routes/api/users');
-var apiArticlesRouter = require('./routes/api/articles');
-
-
-var app = express();
-
-//Call the config file
-var config = require('./config.dev');
-
-//Connect to MongoDB
-mongoose.connect(config.mongodb, { useNewUrlParser: true });
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -58,6 +51,7 @@ app.use(require('express-session')({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
+
 passport.use(Users.createStrategy());
 
 passport.serializeUser(function(user, done){
@@ -74,22 +68,39 @@ passport.deserializeUser(function(user, done){
   done(null, user);
 });
 
+
 app.use(function(req,res,next){
   res.locals.session = req.session;
   next();
 });
 
-//Session based access control
+//Set up CORS
+app.use(function(req, res, next) {
+  res.header('Access-Control-Allow-Credentials', true);
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
+  if ('OPTIONS' == req.method) {
+    res.send(200);
+  } else {
+    next();
+  }
+});
+
+//~line 78
+//Session-based access control
 app.use(function(req,res,next){
-  //Uncomment the following line to allow access to everything.
-  //return next();
+  //Uncomment the following line to allow access to everything
+  //Also known as comment-out the whitelist
+  return next();
 
   //Allow any endpoint that is an exact match. The server does not
   //have access to the hash so /auth and /auth#xxx would bot be considered
   //exact matches.
   var whitelist = [
     '/',
-    '/auth'
+    '/auth',
+    '/articles'
   ];
 
   //req.url holds the current URL
@@ -101,10 +112,11 @@ app.use(function(req,res,next){
     return next();
   }
 
-  //Allow access to dynamic end points
+  //Allow access to dynamic endpoints
   var subs = [
     '/public/',
-    '/api/auth/'
+    '/api/auth/',
+    '/articles'
   ];
 
   //The query string provides a partial URL match beginning
@@ -122,17 +134,17 @@ app.use(function(req,res,next){
   }
 
   //There is no session nor are there any whitelist matches. Deny access and
-  //redirect the user to the login screen.
+  //Redirect the user to the login screen.
   return res.redirect('/auth#login');
 });
 
 app.use('/', indexRouter);
-app.use('/auth', authRouter);
 app.use('/users', usersRouter);
-app.use('/articles', articlesRouter);
-app.use('/api/auth', apiAuthRouter);
 app.use('/api/users', apiUsersRouter);
+app.use('/api/auth', apiAuthRouter);
 app.use('/api/articles', apiArticlesRouter);
+app.use('/auth', authRouter);
+app.use('/articles', articlesRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -149,5 +161,8 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+//Connect to MongoDB
+mongoose.connect(config.mongodb, { useNewUrlParser: true });
 
 module.exports = app;
