@@ -8,6 +8,8 @@ router.get('/', function(req, res, next) {
 router.get('/logout', function(req, res){
   req.logout();
   res.redirect('/auth');
+  // req.session.destroy(function (err) {
+  //   res.redirect('/'); //Inside a callback… bulletproof!
 });
 
 module.exports = router;
